@@ -14,8 +14,8 @@
       config = { allowUnfree = true; };
     };
 
-    lib     = pkgs.lib;
-    stdenv  = pkgs.stdenv;
+    lib      = pkgs.lib;
+    stdenv   = pkgs.stdenv;
     fetchzip = pkgs.fetchzip;
 
     # runtime libs for rpath
@@ -31,9 +31,9 @@
       pkgs.xorg.xcbutilrenderutil pkgs.xorg.xcbutilcursor
     ];
 
-    # optional xdotool path
+    # optional xdotool in PATH
     xdoPath = lib.optionalString (pkgs.xdotool != null)
-      "${lib.makeBinPath [ pkgs.xdotool ]}";
+      (lib.makeBinPath [ pkgs.xdotool ]);
 
     # 1) build the proprietary binary
     remoteMouseDrv = stdenv.mkDerivation rec {
@@ -89,7 +89,7 @@ EOF
           --set QT_PLUGIN_PATH "$vendorQtPlugins" \
           --set QT_QPA_PLATFORM_PLUGIN_PATH "${vendorQtPlugins}/platforms" \
           --set QML2_IMPORT_PATH "$vendorQtQml" \
-          ${xdoPath:+--prefix PATH : ${xdoPath}}
+          ${lib.optionalString (xdoPath != "") ("--prefix PATH : " + xdoPath)}
       '';
 
       postFixup = ''
