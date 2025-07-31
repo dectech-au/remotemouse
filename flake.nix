@@ -47,9 +47,6 @@
 
       # expose a NixOS module
       nixosModules.remotemouse = { config, lib, pkgs, ... }: {
-        # pull in our overlay
-        nixpkgs.overlays = [ overlay ];
-
         config = {
           nixpkgs.config.allowUnfree = true;
 
@@ -61,6 +58,8 @@
           networking.firewall.allowedTCPPorts = [ 1978 ];
           networking.firewall.allowedUDPPorts = [ 1978 ];
         };
+        # pull in our overlay
+        nixpkgs.overlays = [ overlay ];
       };
     };
 }
