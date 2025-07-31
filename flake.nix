@@ -46,7 +46,7 @@
     defaultPackage.${system} = remoteMouseDrv;
 
     # expose a NixOS module
-    nixosModules.remotemouse = { config, lib, pkgs, … }: {
+    nixosModules.remotemouse = { config, lib, pkgs, ... }: {
       config = {
         # ← everything goes in here
         nixpkgs.overlays          = [ overlay ];  
