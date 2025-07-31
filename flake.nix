@@ -48,6 +48,8 @@
       # expose a NixOS module
       nixosModules.remotemouse = { config, lib, pkgs, ... }: {
         config = {
+          nixpkgs.overlays = [ overlay ];
+
           nixpkgs.config.allowUnfree = true;
 
           environment.systemPackages = [
