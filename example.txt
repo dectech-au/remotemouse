@@ -1,0 +1,22 @@
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    remotemouse = {
+      url = "github:dectech-au/remotemouse";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { self, nixpkgs, remotemouse, ... }: {
+    # for a plain flake-based `nixos:
+    imports = [
+      remotemouse.nixosModules.remotemouse
+    ];
+
+    # or if you’re building a nixosConfiguration:
+    # nixosConfigurations.${HOST} = nixpkgs.lib.nixosSystem {
+    #   system  = "x86_64-linux";
+    #   modules = [ remotemouse.nixosModules.remotemouse ];
+    # };
+  };
+}
