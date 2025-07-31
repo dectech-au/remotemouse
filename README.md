@@ -8,16 +8,6 @@ https://www.remotemouse.net/
 
 Installation:
 
-Add this repo to your flake.nix:
+Add this repo as an import, then add it in 'imports' with: remotemouse.nixosModules.remotemouse
 
-inputs = {
-  remotemouse.url = "github:dectech-au/remotemouse"
-  remotemouse.inputs.nixpkgs.follows = "nixpkgs";
-};
-
-then add the module to your imports:
-
-outputs = { self, nixpkgs, remotemouse, ... }: {
-  imports = [ remotemouse.nixosModules.remotemouse ];
-
-then rebuild, and enjoy.
+If you're confused, check the example.txt file
