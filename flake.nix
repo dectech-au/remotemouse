@@ -24,7 +24,7 @@
         dontPatchELF     = true;
         dontStrip        = true;
 
-        installPhase = '' 
+        installPhase = ''
           mkdir -p $out/opt/remotemouse
           cp -r RemoteMouse lib images $out/opt/remotemouse/
           # …your wrapper + patchelf bits here…
@@ -48,8 +48,10 @@
       # expose a NixOS module
       nixosModules.remotemouse = { config, lib, pkgs, ... }: {
         config = {
-          nixpkgs.overlays = [ overlay ];
+          # pull in our overlay
+          nixpkgs.overlays        = [ overlay ];
 
+          # allow fetching the unfree binary
           nixpkgs.config.allowUnfree = true;
 
           environment.systemPackages = [
@@ -60,8 +62,6 @@
           networking.firewall.allowedTCPPorts = [ 1978 ];
           networking.firewall.allowedUDPPorts = [ 1978 ];
         };
-        # pull in our overlay
-        nixpkgs.overlays = [ overlay ];
       };
     };
 }
