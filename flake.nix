@@ -18,7 +18,7 @@
     stdenv   = pkgs.stdenv;
     fetchzip = pkgs.fetchzip;
 
-    # runtime libs for rpath
+    # path list for rpath
     runtimeLibPath = lib.makeLibraryPath [
       pkgs.glib pkgs.dbus pkgs.zlib pkgs.freetype pkgs.fontconfig
       pkgs.libxkbcommon pkgs.libGL pkgs.alsa-lib
@@ -31,11 +31,11 @@
       pkgs.xorg.xcbutilrenderutil pkgs.xorg.xcbutilcursor
     ];
 
-    # optional xdotool in PATH
+    # optional xdotool wrapper
     xdoPath = lib.optionalString (pkgs.xdotool != null)
       (lib.makeBinPath [ pkgs.xdotool ]);
 
-    # 1) build the proprietary binary
+    # 1) build the proprietary RemoteMouse binary
     remoteMouseDrv = stdenv.mkDerivation rec {
       pname    = "remotemouse";
       version  = "2023-01-25";
@@ -47,13 +47,18 @@
       };
 
       nativeBuildInputs = [ pkgs.makeWrapper pkgs.patchelf ];
-
       dontPatchELF = true;
       dontStrip    = true;
 
       installPhase = ''
         mkdir -p $out/opt/remotemouse
         cp -r RemoteMouse lib images $out/opt/remotemouse/
+
+        # shell vars for vendored libs
+        vendorLib="$out/opt/remotemouse/lib"
+        vendorQtLib="$vendorLib/PyQt5/Qt5/lib"
+        vendorQtPlugins="$vendorLib/PyQt5/Qt5/plugins"
+        vendorQtQml="$vendorLib/PyQt5/Qt5/qml"
 
         # desktop entry
         mkdir -p $out/share/applications
@@ -74,20 +79,15 @@ EOF
           cp images/RemoteMouse.png $out/share/pixmaps/remotemouse.png
         fi
 
-        # vendor library paths
-        vendorLib="$out/opt/remotemouse/lib"
-        vendorQtLib="$vendorLib/PyQt5/Qt5/lib"
-        vendorQtPlugins="$vendorLib/PyQt5/Qt5/plugins"
-        vendorQtQml="$vendorLib/PyQt5/Qt5/qml"
-
+        # wrapper
         mkdir -p $out/bin
         makeWrapper $out/opt/remotemouse/RemoteMouse $out/bin/remotemouse \
           --chdir $out/opt/remotemouse \
-          --prefix LD_LIBRARY_PATH : "${vendorLib}:${vendorLib}/PyQt5:${vendorQtLib}:${runtimeLibPath}" \
+          --prefix LD_LIBRARY_PATH : "$vendorLib:$vendorQtLib:${runtimeLibPath}" \
           --set PYTHONHOME "$vendorLib" \
           --set PYTHONPATH "$vendorLib" \
           --set QT_PLUGIN_PATH "$vendorQtPlugins" \
-          --set QT_QPA_PLATFORM_PLUGIN_PATH "${vendorQtPlugins}/platforms" \
+          --set QT_QPA_PLATFORM_PLUGIN_PATH "$vendorQtPlugins/platforms" \
           --set QML2_IMPORT_PATH "$vendorQtQml" \
           ${lib.optionalString (xdoPath != "") ("--prefix PATH : " + xdoPath)}
       '';
@@ -96,12 +96,12 @@ EOF
         echo "Patching RemoteMouse ELF..."
         patchelf \
           --set-interpreter ${stdenv.cc.bintools.dynamicLinker} \
-          --set-rpath "${vendorLib}:${vendorLib}/PyQt5:${vendorQtLib}:${runtimeLibPath}" \
+          --set-rpath "$vendorLib:$vendorQtLib:${runtimeLibPath}" \
           $out/opt/remotemouse/RemoteMouse || true
 
         for so in $out/opt/remotemouse/lib/*.so*; do
           [ -e "$so" ] || continue
-          patchelf --set-rpath "${vendorLib}:${vendorLib}/PyQt5:${vendorQtLib}:${runtimeLibPath}" "$so" || true
+          patchelf --set-rpath "$vendorLib:$vendorQtLib:${runtimeLibPath}" "$so" || true
         done
       '';
 
@@ -112,7 +112,7 @@ EOF
       };
     };
 
-    # 2) expose as pkgs.remotemouse
+    # 2) export an overlay so pkgs.remotemouse is available
     overlay = final: prev: {
       remotemouse = remoteMouseDrv;
     };
